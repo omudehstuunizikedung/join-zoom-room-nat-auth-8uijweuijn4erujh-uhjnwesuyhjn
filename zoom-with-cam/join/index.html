@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+
+    <meta name="robots" content="index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="" />
+    <meta property="og:description" content="" />
+    <meta property="og:url" content="" />
+    <meta property="og:site_name" content="" />
+    <meta property="og:image" content="" />
+    <meta property="og:image:secure_url" content="" />
+    <meta property="og:image:width" content="500" />
+    <meta property="og:image:height" content="500" />
+    <meta property="og:image:alt" content="" />
+    <meta property="og:image:type" content="image/png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="" />
+    <meta name="twitter:description" content="" />
+    <meta name="twitter:image" content="" />
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>Waiting Room</title>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen text-lg">
+
+    <div class="bg-white shadow-md rounded-lg p-6 w-full mt-4">
+        <div class="flex items-start justify-between mb-4 gap-6">
+            <div class="flex flex-col md:flex-row items-start justify-between mb-4 gap-6 flex-1">
+                <div class="flex items-center relative w-full md:w-96">
+                    <div id="userImage"
+                        class="rounded-md w-full h-48 object-cover shadow-sm bg-gray-900 flex justify-center items-center">
+                        <span class="w-20 h-20 rounded-md bg-gray-600 flex items-center justify-center"><i
+                                class="fa-solid fa-user text-6xl text-gray-900"></i></span>
+                    </div>
+                    <div class="absolute bottom-2 flex items-center justify-center w-full gap-4">
+                        <button id="micButton"
+                            class=" bg-black bg-opacity-50 rounded-md p-2 focus:outline-none w-10 h-10 hidden">
+                            <i id="activeMic" class="fa-solid fa-microphone text-white"></i>
+                        </button>
+                        <button id="inactiveMicButton"
+                            class=" bg-red-500 bg-opacity-50 rounded-md p-2 focus:outline-none w-10 h-10">
+                            <i class="fa-solid fa-microphone-slash text-white"></i>
+                        </button>
+                        <button id="cameraButton"
+                            class=" bg-black bg-opacity-50 rounded-md p-2 focus:outline-none w-10 h-10 hidden">
+                            <i class="fa-solid fa-video text-white"></i>
+                        </button>
+                        <button id="inactiveCameraButton"
+                            class=" bg-red-500 bg-opacity-50 rounded-md p-2 focus:outline-none w-10 h-10">
+                            <i class="fa-solid fa-video-slash text-white"></i>
+                        </button>
+
+                    </div>
+                    <video id="userVideo" class="rounded-md shadow-sm w-96 max-w-full h-48 object-cover hidden"
+                        autoplay></video>
+                </div>
+                <div class="ml-4 flex-1">
+                    <h1 class="text-4xl font-bold">Marketing Strategy Sync</h1>
+                    <p class="text-gray-500">Scheduled: <span id="time-schedule"></span></p>
+                    <p class="text-gray-600 font-semibold mt-12 mb-6">Waiting for host to start the meeting <span><i
+                                class="fa-solid fa-spinner text-blue-500 animate-spin"></i></span></p>
+                    <div class="mb-6 flex gap-4 flex-wrap w-full">
+                        <a href="#" class="text-blue-500 underline">Host Sign In</a>
+                        <a href="#" class="text-blue-500 underline">Test Speaker and Mic</a>
+                    </div>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center space-x-2">
+                <button class="bg-gray-200 rounded-md p-2 w-10 h-10 focus:outline-none">
+                    <i class="fa-solid fa-ellipsis"></i>
+                </button>
+            </div>
+        </div>
+        <div class="bg-blue-500 rounded-lg overflow-hidden">
+            <img src="IMG_9927.jpg" alt="Zoooom" class="w-full">
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const now = new Date();
+            now.setHours(now.getHours() + 1);
+            now.setMinutes(30);
+            document.getElementById('time-schedule').textContent = formatTime(now);
+
+            function formatTime(date) {
+                const options = { hour: 'numeric', minute: 'numeric', hour12: true };
+                return date.toLocaleTimeString(undefined, options).toLowerCase();
+            }
+        })
+
+        const cameraButton = document.getElementById('cameraButton');
+        const micButton = document.getElementById('micButton');
+        const userVideo = document.getElementById('userVideo');
+        const userImage = document.getElementById('userImage');
+        const inactiveCameraButton = document.getElementById('inactiveCameraButton');
+        const inactiveMicButton = document.getElementById('inactiveMicButton');
+
+        cameraButton.addEventListener('click', deactivateCamera);
+        micButton.addEventListener('click', deactivateMic);
+        inactiveCameraButton.addEventListener('click', activateCamera)
+        inactiveMicButton.addEventListener('click', activateMic)
+
+        let videoStream;
+        let audioStream;
+
+        async function activateCamera() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                userVideo.srcObject = videoStream;
+                userImage.classList.add('hidden');
+                userVideo.classList.remove('hidden');
+                cameraButton.classList.toggle('hidden');
+                inactiveCameraButton.classList.toggle('hidden');
+            } catch (error) {
+                console.error('Error accessing the camera:', error);
+            }
+        }
+
+        function deactivateCamera() {
+            if (videoStream) {
+                let tracks = videoStream.getTracks();
+                tracks.forEach(track => track.stop());
+                userVideo.classList.add('hidden');
+                userImage.classList.remove('hidden');
+                cameraButton.classList.toggle('hidden');
+                inactiveCameraButton.classList.toggle('hidden');
+            }
+        }
+
+        async function activateMic() {
+            try {
+                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                micButton.classList.toggle('hidden')
+                inactiveMicButton.classList.toggle('hidden')
+            } catch (error) {
+                console.error('Error accessing the microphone:', error);
+            }
+        }
+
+        function deactivateMic() {
+            if (audioStream) {
+                let tracks = audioStream.getTracks();
+                tracks.forEach(track => track.stop());
+                console.log('Microphone access revoked');
+                micButton.classList.toggle('hidden');
+                inactiveMicButton.classList.toggle('hidden');
+            }
+        }
+
+
+        activateCamera()
+    </script>
+
+</body>
+
+</html>
